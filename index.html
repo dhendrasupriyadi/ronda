@@ -3,163 +3,138 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RT 11 RW 04 GPA - Digital</title>
+    <title>RT 11 RW 04 GPA - Sistem Informasi Ronda</title>
+    <!-- Library PDF Utama -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Library untuk PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
-        .loader { border: 2px solid #f3f3f3; border-radius: 50%; border-top: 2px solid #4f46e5; width: 16px; height: 16px; animation: spin 1s linear infinite; }
+        .loader { border: 3px solid #f3f3f3; border-radius: 50%; border-top: 3px solid #2563eb; width: 24px; height: 24px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        input:focus, select:focus, textarea:focus { outline: none; ring: 2px; ring-color: #4f46e5; }
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .camera-box { position: relative; width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 1rem; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 2px solid #e2e8f0; }
+        video { width: 100%; height: 100%; object-fit: cover; }
+        #canvas { display: none; }
     </style>
 </head>
-<body class="pb-10">
+<body class="pb-20">
 
-    <!-- Header Centering -->
-    <header class="bg-indigo-700 text-white p-6 shadow-lg mb-6 sticky top-0 z-50">
-        <div class="container mx-auto relative flex items-center justify-center">
-            <!-- Icon/Logo kiri (opsional tetap ada tapi hidden di mobile kecil agar teks benar-benar center) -->
-            <div class="hidden sm:flex items-center absolute left-0 bg-white/10 p-2 rounded-xl">
-                🛡️
+    <nav class="bg-blue-700 text-white sticky top-0 z-50 shadow-lg">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-2">
+            <div class="text-center md:text-left">
+                <h1 class="text-xl font-extrabold tracking-tight">POS RONDA RT 11</h1>
+                <p class="text-[10px] uppercase tracking-[0.3em] font-bold text-blue-200">Sistem Presensi & Pelaporan</p>
             </div>
-
-            <!-- Teks Tengah -->
-            <div class="text-center">
-                <h1 class="font-bold text-xl sm:text-2xl uppercase tracking-widest leading-none">RT 11 RW 04 GPA</h1>
-                <p class="text-[10px] sm:text-xs opacity-80 uppercase font-black mt-1 tracking-widest">Sistem Kehadiran Ronda Digital</p>
-            </div>
-
-            <!-- Jam Kanan -->
-            <div id="clock" class="absolute right-0 font-mono text-[10px] sm:text-sm opacity-90 bg-black/30 px-3 py-1.5 rounded-lg border border-white/10">
-                00:00:00
+            <div class="flex gap-2">
+                <button onclick="switchTab('form')" id="nav-form" class="px-4 py-2 rounded-lg bg-blue-800 text-xs font-bold">ISI PRESENSI</button>
+                <button onclick="switchTab('report')" id="nav-report" class="px-4 py-2 rounded-lg hover:bg-blue-800 text-xs font-bold">LIHAT REKAP</button>
             </div>
         </div>
-    </header>
+    </nav>
 
-    <main class="container mx-auto px-4 max-w-5xl">
-        <!-- Dashboard Ringkasan Utama -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-                <p class="text-[10px] font-bold text-gray-400 uppercase">Hadir (Minggu Ini)</p>
-                <h3 id="rekapMinggu" class="text-2xl font-black text-indigo-600">0</h3>
-            </div>
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-                <p class="text-[10px] font-bold text-gray-400 uppercase">Hadir (Bulan Ini)</p>
-                <h3 id="rekapBulan" class="text-2xl font-black text-green-600">0</h3>
-            </div>
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-                <p class="text-[10px] font-bold text-gray-400 uppercase">Total Izin/Sakit</p>
-                <h3 id="rekapIzinSakit" class="text-2xl font-black text-orange-500">0</h3>
-            </div>
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-                <p class="text-[10px] font-bold text-gray-400 uppercase">Total Alpa</p>
-                <h3 id="rekapAlpa" class="text-2xl font-black text-red-500">0</h3>
-            </div>
-        </div>
+    <main class="max-w-6xl mx-auto px-4 mt-8">
+        
+        <section id="section-form" class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div class="lg:col-span-12">
+                <div class="bg-white rounded-[2rem] shadow-xl p-6 md:p-10 border border-gray-100">
+                    <form id="rondaForm" class="space-y-8">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div class="space-y-4">
+                                <h3 class="text-sm font-black text-gray-800 uppercase flex items-center gap-2">
+                                    <span class="p-2 bg-blue-100 text-blue-600 rounded-lg">👥</span> Petugas Malam Ini
+                                </h3>
+                                <div id="petugasInputs" class="space-y-3"></div>
+                            </div>
 
-        <!-- Tabel Keaktifan Petugas -->
-        <div class="mb-8">
-            <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
-                    <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center">
-                        <span class="mr-2">🏆</span> Rekap Kehadiran Per Orang (Bulan Ini)
-                    </h3>
-                    <span class="text-[9px] bg-indigo-50 text-indigo-600 px-2 py-1 rounded-full font-bold">Auto-Calculate</span>
-                </div>
-                <div id="rekapKeaktifan" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                    <p class="text-xs text-gray-400 italic col-span-full">Menghitung data...</p>
-                </div>
-            </div>
-        </div>
+                            <div class="space-y-4">
+                                <h3 class="text-sm font-black text-gray-800 uppercase flex items-center gap-2">
+                                    <span class="p-2 bg-orange-100 text-orange-600 rounded-lg">📝</span> Laporan Tambahan
+                                </h3>
+                                <div class="space-y-3">
+                                    <input type="text" id="konsumsi" placeholder="PEMBERI KONSUMSI" required class="w-full p-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-blue-500 font-bold text-xs uppercase">
+                                    <textarea id="keterangan" placeholder="CATATAN / KEJADIAN" class="w-full p-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-blue-500 font-bold text-xs uppercase h-24"></textarea>
+                                </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            
-            <!-- Form Input -->
-            <div class="lg:col-span-5 bg-white p-6 rounded-3xl shadow-xl border border-gray-100 h-fit">
-                <div class="flex items-center mb-6">
-                    <span class="bg-indigo-100 text-indigo-700 w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs mr-2">01</span>
-                    <h2 class="font-bold text-gray-700">Input Presensi Petugas</h2>
-                </div>
-                
-                <form id="formRonda" class="space-y-4">
-                    <div class="grid grid-cols-2 gap-2 p-3 bg-gray-50 rounded-2xl mb-4">
-                        <div>
-                            <label class="text-[9px] font-bold text-gray-400 uppercase">Hari</label>
-                            <select id="hari" class="w-full bg-transparent font-bold text-sm border-none p-0 focus:ring-0"></select>
+                                <div class="camera-box mt-4">
+                                    <div id="camStatus" class="text-center z-10">
+                                        <div class="loader mx-auto mb-2"></div>
+                                        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Mempersiapkan Kamera...</p>
+                                    </div>
+                                    <video id="video" autoplay playsinline muted class="hidden"></video>
+                                    <div id="photoPreview" class="hidden absolute inset-0 z-20">
+                                        <img id="capturedPhoto" class="w-full h-full object-cover">
+                                    </div>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button type="button" id="btnAmbil" onclick="takePhoto()" class="flex-1 bg-gray-900 text-white text-[10px] font-black py-3 rounded-xl hidden uppercase">Ambil Foto Bukti</button>
+                                    <button type="button" id="btnUlang" onclick="retakePhoto()" class="flex-1 bg-red-50 text-red-600 text-[10px] font-black py-3 rounded-xl hidden uppercase">Foto Ulang</button>
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                            <label class="text-[9px] font-bold text-gray-400 uppercase">Tanggal</label>
-                            <input type="date" id="tanggal" class="w-full bg-transparent font-bold text-sm border-none p-0 focus:ring-0">
-                        </div>
-                    </div>
-
-                    <div class="space-y-3">
-                        <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Daftar Nama & Status</label>
-                        <div id="petugasContainer" class="space-y-2"></div>
-                    </div>
-
-                    <div class="pt-2">
-                        <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Penyedia Konsumsi</label>
-                        <input type="text" id="konsumsi" placeholder="Sebutkan penyedia konsumsi" 
-                            class="w-full p-3 bg-gray-50 rounded-xl border-none text-sm font-semibold mt-1">
-                    </div>
-
-                    <div class="pt-2">
-                        <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Keterangan Tambahan</label>
-                        <textarea id="ket" placeholder="Misal: Situasi lingkungan aman..." class="w-full p-3 bg-gray-50 rounded-xl border-none text-sm h-16 mt-1"></textarea>
-                    </div>
-
-                    <button type="submit" id="btnSubmit" class="w-full bg-indigo-600 text-white font-bold py-4 rounded-2xl shadow-lg hover:bg-indigo-700 transition flex justify-center items-center">
-                        <span id="btnText">Simpan Laporan</span>
-                    </button>
-                </form>
+                        <button type="submit" id="btnSubmit" class="w-full bg-blue-600 text-white font-black py-5 rounded-2xl shadow-xl hover:bg-blue-700 transition-all flex justify-center items-center">
+                            SIMPAN DATA RONDA
+                        </button>
+                    </form>
+                </div>
             </div>
+        </section>
 
-            <!-- Riwayat -->
-            <div class="lg:col-span-7 space-y-4">
-                <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
-                    <div class="p-6 border-b flex justify-between items-center">
-                        <div>
-                            <h2 class="font-bold text-gray-800">Riwayat Presensi</h2>
-                            <p class="text-[10px] text-gray-400 uppercase font-bold" id="statusCloud">Checking...</p>
-                        </div>
-                        <button onclick="downloadPDF()" class="bg-red-50 text-red-600 text-[10px] font-black px-4 py-2 rounded-xl hover:bg-red-100 transition border border-red-100 flex items-center">
-                            <span class="mr-1">📄</span> EKSPOR PDF
+        <section id="section-report" class="hidden space-y-6">
+            <div class="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
+                <div class="p-6 bg-gray-50 border-b flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div>
+                        <h2 class="font-black text-gray-800 uppercase text-sm">Rekapitulasi Kehadiran</h2>
+                        <p class="text-[10px] text-gray-400 font-bold uppercase">Laporan Bulanan RT 11</p>
+                    </div>
+                    <div class="flex gap-2 w-full md:w-auto">
+                        <input type="month" id="monthFilter" class="bg-white border p-2 rounded-lg text-xs font-bold outline-none flex-1 md:w-40">
+                        <button id="btnPdf" onclick="downloadPDF()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-black shadow-md hover:bg-blue-700 flex items-center justify-center min-w-[120px]">
+                            <span id="pdfLabel">UNDUH PDF</span>
                         </button>
                     </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left">
-                            <thead class="bg-gray-50 text-[10px] uppercase text-gray-400 font-bold">
-                                <tr>
-                                    <th class="px-6 py-4">Waktu</th>
-                                    <th class="px-6 py-4">Daftar Hadir</th>
-                                    <th class="px-6 py-4">Konsumsi & Ket</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tabelBodi" class="text-sm divide-y divide-gray-50"></tbody>
-                        </table>
-                        <div id="loading" class="p-10 text-center flex flex-col items-center">
-                            <div class="loader mb-2"></div>
-                            <p class="text-xs text-gray-400 italic">Sinkronisasi Cloud...</p>
-                        </div>
-                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-white text-[9px] uppercase text-gray-400 font-black border-b">
+                            <tr>
+                                <th class="px-6 py-4">Waktu</th>
+                                <th class="px-6 py-4">Petugas</th>
+                                <th class="px-6 py-4">Konsumsi</th>
+                                <th class="px-6 py-4">Foto</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody" class="divide-y divide-gray-50 text-xs"></tbody>
+                    </table>
+                </div>
+                <div id="loadingData" class="p-10 text-center">
+                    <div class="loader mx-auto mb-2"></div>
+                    <p class="text-xs text-gray-400 font-bold uppercase italic">Memuat Data Cloud...</p>
                 </div>
             </div>
-        </div>
+        </section>
     </main>
 
-    <footer class="text-center mt-10 text-gray-400 text-sm">
-        &copy; Dody & Falah 2026 - RT 11 GPA
-    </footer>
+    <canvas id="canvas"></canvas>
+
+    <template id="petugasTemplate">
+        <div class="flex flex-col sm:flex-row gap-2 items-center bg-gray-50 p-3 rounded-xl border border-gray-100">
+            <input type="text" placeholder="NAMA" required class="flex-1 w-full bg-white border border-gray-200 p-2 rounded-lg text-xs font-bold uppercase outline-none focus:ring-1 focus:ring-blue-500">
+            <select class="w-full sm:w-32 bg-white border border-gray-200 p-2 rounded-lg text-xs font-bold outline-none cursor-pointer">
+                <option value="HADIR">HADIR</option>
+                <option value="SAKIT">SAKIT</option>
+                <option value="IJIN">IJIN</option>
+                <option value="ALPHA">ALPHA</option>
+            </select>
+        </div>
+    </template>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, query } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCT9cm-V36mCCcdrQIvhbPqrgtE-snk_6Y",
@@ -173,274 +148,232 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = "ronda-rt11-production";
-        let dataRonda = [];
+        const appId = "ronda-rt11-rekap-final";
 
-        // Inisialisasi input petugas
-        const container = document.getElementById('petugasContainer');
-        for (let i = 1; i <= 5; i++) {
-            container.innerHTML += `
-                <div class="flex gap-2">
-                    <input type="text" id="nama${i}" placeholder="Nama Petugas ${i}" 
-                        class="flex-1 p-3 bg-gray-50 rounded-xl border-none text-sm font-semibold uppercase focus:ring-2 focus:ring-indigo-500">
-                    <select id="status${i}" class="w-32 p-3 bg-indigo-50 text-indigo-700 rounded-xl border-none text-xs font-bold">
-                        <option value="Hadir">HADIR</option>
-                        <option value="Izin">IZIN</option>
-                        <option value="Sakit">SAKIT</option>
-                        <option value="Alpa">ALPA</option>
-                    </select>
-                </div>
-            `;
+        let allLogs = [];
+        let photoData = "";
+
+        // UI
+        const container = document.getElementById('petugasInputs');
+        const template = document.getElementById('petugasTemplate');
+        for(let i=1; i<=5; i++){
+            const clone = template.content.cloneNode(true);
+            clone.querySelector('input').placeholder = `PETUGAS ${i}`;
+            container.appendChild(clone);
         }
 
-        function formatTanggalKeIndo(dateStr) {
-            if (!dateStr || dateStr === "-") return "-";
+        // KAMERA
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const photoPreview = document.getElementById('photoPreview');
+        const capturedPhoto = document.getElementById('capturedPhoto');
+        const camStatus = document.getElementById('camStatus');
+        const btnAmbil = document.getElementById('btnAmbil');
+        const btnUlang = document.getElementById('btnUlang');
+
+        async function initCamera() {
             try {
-                const parts = dateStr.split("-");
-                if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
-                return dateStr;
-            } catch (e) { return dateStr; }
-        }
-
-        function setStatusUI(text, color) {
-            const el = document.getElementById('statusCloud');
-            if (el) {
-                el.innerText = text.toUpperCase();
-                el.className = `text-[10px] font-bold uppercase tracking-widest ${color}`;
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                video.srcObject = stream;
+                video.onloadedmetadata = () => {
+                    video.play();
+                    video.classList.remove('hidden');
+                    camStatus.classList.add('hidden');
+                    btnAmbil.classList.remove('hidden');
+                };
+            } catch (err) {
+                camStatus.innerHTML = '<p class="text-red-500 font-bold text-[10px] uppercase">Gagal Membuka Kamera</p>';
             }
         }
 
+        window.takePhoto = () => {
+            const ctx = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.drawImage(video, 0, 0);
+            photoData = canvas.toDataURL('image/jpeg', 0.5);
+            capturedPhoto.src = photoData;
+            photoPreview.classList.remove('hidden');
+            btnAmbil.classList.add('hidden');
+            btnUlang.classList.remove('hidden');
+        };
+
+        window.retakePhoto = () => {
+            photoData = "";
+            photoPreview.classList.add('hidden');
+            btnAmbil.classList.remove('hidden');
+            btnUlang.classList.add('hidden');
+        };
+
+        // DATABASE
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                setStatusUI("Terhubung Cloud", "text-green-500");
-                const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'kehadiran');
-                onSnapshot(colRef, (snap) => {
-                    dataRonda = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    dataRonda.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
-                    calculateRekap();
-                    renderTabel();
-                    document.getElementById('loading').classList.add('hidden');
-                }, (error) => {
-                    setStatusUI("Offline / Error", "text-red-500");
+                const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'logs'));
+                onSnapshot(q, (snap) => {
+                    allLogs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    allLogs.sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+                    renderData();
+                    document.getElementById('loadingData').classList.add('hidden');
                 });
             } else {
                 await signInAnonymously(auth);
             }
         });
 
-        function calculateRekap() {
-            const skrg = new Date();
-            const satuMingguLalu = new Date();
-            satuMingguLalu.setDate(skrg.getDate() - 7);
-            
-            let hadirMinggu = 0, hadirBulan = 0, izinSakit = 0, alpa = 0;
-            const bulanSkrg = skrg.getMonth();
-            const tahunSkrg = skrg.getFullYear();
-
-            const keaktifanMap = {};
-
-            dataRonda.forEach(laporan => {
-                const tglLaporan = new Date(laporan.tanggal);
-                const isMingguIni = tglLaporan >= satuMingguLalu;
-                const isBulanIni = tglLaporan.getMonth() === bulanSkrg && tglLaporan.getFullYear() === tahunSkrg;
-
-                (laporan.petugas || []).forEach(p => {
-                    if (p.status === 'Hadir') {
-                        if (isMingguIni) hadirMinggu++;
-                        if (isBulanIni) {
-                            hadirBulan++;
-                            keaktifanMap[p.nama] = (keaktifanMap[p.nama] || 0) + 1;
-                        }
-                    } else if (p.status === 'Izin' || p.status === 'Sakit') {
-                        izinSakit++;
-                    } else if (p.status === 'Alpa') {
-                        alpa++;
-                    }
-                });
-            });
-
-            document.getElementById('rekapMinggu').innerText = hadirMinggu;
-            document.getElementById('rekapBulan').innerText = hadirBulan;
-            document.getElementById('rekapIzinSakit').innerText = izinSakit;
-            document.getElementById('rekapAlpa').innerText = alpa;
-
-            // Render List Keaktifan Centering Text
-            const keaktifanEl = document.getElementById('rekapKeaktifan');
-            const sortedKeaktifan = Object.entries(keaktifanMap).sort((a, b) => b[1] - a[1]);
-            
-            if (sortedKeaktifan.length === 0) {
-                keaktifanEl.innerHTML = `<p class="text-xs text-gray-400 italic col-span-full">Belum ada data hadir bulan ini.</p>`;
-            } else {
-                keaktifanEl.innerHTML = sortedKeaktifan.map(([nama, jml]) => `
-                    <div class="flex justify-between items-center bg-gray-50 p-3 rounded-xl border border-gray-100 hover:border-indigo-200 hover:bg-white transition-all shadow-sm group">
-                        <span class="text-xs font-bold text-gray-700 uppercase">${nama}</span>
-                        <div class="flex items-center bg-indigo-600 text-white px-3 py-1 rounded-lg">
-                            <span class="text-[10px] font-black mr-1">${jml}</span>
-                            <span class="text-[8px] opacity-70">HADIR</span>
-                        </div>
-                    </div>
-                `).join('');
-            }
-        }
-
-        document.getElementById('formRonda').addEventListener('submit', async (e) => {
+        document.getElementById('rondaForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            if(!photoData) return alert("Wajib foto bukti!");
             const btn = document.getElementById('btnSubmit');
-            const btnText = document.getElementById('btnText');
-            
-            const petugasList = [];
-            for(let i=1; i<=5; i++) {
-                const namaVal = document.getElementById(`nama${i}`).value.trim();
-                if(namaVal) {
-                    petugasList.push({
-                        nama: namaVal.toUpperCase(),
-                        status: document.getElementById(`status${i}`).value
-                    });
-                }
-            }
-
-            if(petugasList.length === 0) return alert("Masukkan minimal 1 nama petugas.");
-
             btn.disabled = true;
-            btnText.innerHTML = '<div class="loader"></div>';
-
+            btn.innerHTML = '<div class="loader"></div>';
+            const petugasList = Array.from(document.querySelectorAll('#petugasInputs > div')).map(row => ({
+                nama: row.querySelector('input').value.toUpperCase(),
+                status: row.querySelector('select').value
+            }));
             try {
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'kehadiran'), {
-                    hari: document.getElementById('hari').value,
-                    tanggal: document.getElementById('tanggal').value,
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'logs'), {
                     petugas: petugasList,
-                    konsumsi: document.getElementById('konsumsi').value.trim(),
-                    ket: document.getElementById('ket').value.trim(),
+                    konsumsi: document.getElementById('konsumsi').value.toUpperCase(),
+                    keterangan: document.getElementById('keterangan').value.toUpperCase(),
+                    foto: photoData,
                     timestamp: serverTimestamp()
                 });
-                document.getElementById('formRonda').reset();
-                setWaktuDefault();
+                alert("Laporan Tersimpan!");
+                location.reload();
             } catch (err) {
-                alert("Gagal menyimpan data ke cloud.");
-            } finally {
+                alert("Error: " + err.message);
                 btn.disabled = false;
-                btnText.innerText = "Simpan Laporan";
+                btn.innerText = "SIMPAN DATA RONDA";
             }
         });
 
-        function renderTabel() {
-            const bodi = document.getElementById('tabelBodi');
-            if(dataRonda.length === 0) {
-                bodi.innerHTML = `<tr><td colspan="3" class="p-10 text-center text-gray-400 italic">Belum ada riwayat presensi.</td></tr>`;
+        function renderData() {
+            const tableBody = document.getElementById('tableBody');
+            const monthVal = document.getElementById('monthFilter').value;
+            const filtered = allLogs.filter(log => {
+                if(!monthVal) return true;
+                const d = new Date(log.timestamp?.seconds * 1000);
+                return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}` === monthVal;
+            });
+            if(filtered.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-gray-400 font-bold uppercase italic text-[10px]">Kosong</td></tr>';
                 return;
             }
-            bodi.innerHTML = dataRonda.map(d => `
-                <tr class="hover:bg-gray-50 border-b border-gray-50 last:border-none transition">
-                    <td class="px-6 py-4 align-top">
-                        <b class="block text-gray-700 text-xs">${d.hari || '-'}</b>
-                        <span class="text-[10px] text-gray-400 font-bold tracking-wider italic">${formatTanggalKeIndo(d.tanggal)}</span>
-                    </td>
-                    <td class="px-6 py-4">
-                        <div class="space-y-1">
-                            ${(d.petugas || []).map(p => `
-                                <div class="flex items-center text-xs">
-                                    <span class="w-1.5 h-1.5 rounded-full mr-2 ${p.status === 'Hadir' ? 'bg-green-500' : 'bg-red-400'}"></span>
-                                    <span class="font-bold text-gray-700">${p.nama}</span>
-                                    <span class="ml-auto text-[8px] font-black uppercase px-1.5 py-0.5 rounded ${p.status === 'Hadir' ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-400'}">${p.status}</span>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </td>
-                    <td class="px-6 py-4 align-top">
-                        ${d.konsumsi ? `<div class="mb-1 text-[10px] font-bold text-indigo-600">🍞 ${d.konsumsi}</div>` : ''}
-                        <div class="text-[10px] text-gray-400 italic leading-tight">${d.ket || '-'}</div>
-                    </td>
-                </tr>
-            `).join('');
+            tableBody.innerHTML = filtered.map(log => {
+                const dt = log.timestamp ? new Date(log.timestamp.seconds * 1000) : new Date();
+                const pList = log.petugas.map(p => `<div class="flex justify-between items-center mb-1"><span>${p.nama}</span> <span class="px-1 py-0.5 rounded text-[7px] ${getStatusClass(p.status)}">${p.status}</span></div>`).join('');
+                return `<tr class="border-b border-gray-50"><td class="px-4 py-3 font-bold">${dt.toLocaleDateString('id-ID')}<br><span class="text-blue-500 text-[9px]">${dt.toLocaleTimeString('id-ID')}</span></td><td class="px-4 py-3 w-48">${pList}</td><td class="px-4 py-3 uppercase text-gray-600">${log.konsumsi}</td><td class="px-4 py-3"><img src="${log.foto}" class="w-10 h-10 object-cover rounded shadow-sm"></td></tr>`;
+            }).join('');
         }
 
+        function getStatusClass(s) {
+            if(s === 'HADIR') return 'bg-green-100 text-green-700';
+            if(s === 'SAKIT') return 'bg-blue-100 text-blue-700';
+            if(s === 'IJIN') return 'bg-yellow-100 text-yellow-700';
+            return 'bg-red-100 text-red-700';
+        }
+
+        // FUNGSI PDF - PERBAIKAN TOTAL (DIRECT DOWNLOAD)
         window.downloadPDF = function() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
+            const btn = document.getElementById('btnPdf');
+            const lbl = document.getElementById('pdfLabel');
             
-            // Header Center PDF
-            doc.setFontSize(18);
-            doc.setTextColor(79, 70, 229);
-            const title = "LAPORAN RONDA DIGITAL RT 11 RW 04 GPA";
-            const pageWidth = doc.internal.pageSize.getWidth();
-            const textWidth = doc.getTextWidth(title);
-            doc.text(title, (pageWidth - textWidth) / 2, 20);
-
-            doc.setFontSize(10);
-            doc.setTextColor(100);
-            doc.text(`Dicetak pada: ${new Date().toLocaleString('id-ID')}`, 14, 28);
-
-            // Ringkasan Keaktifan
-            doc.setFontSize(12);
-            doc.setTextColor(0);
-            doc.text("Rekap Kehadiran Per Orang (Bulan Ini):", 14, 40);
-            
-            const skrg = new Date();
-            const keaktifanMap = {};
-            dataRonda.forEach(l => {
-                const tgl = new Date(l.tanggal);
-                if(tgl.getMonth() === skrg.getMonth() && tgl.getFullYear() === skrg.getFullYear()){
-                    l.petugas.forEach(p => {
-                        if(p.status === 'Hadir') keaktifanMap[p.nama] = (keaktifanMap[p.nama] || 0) + 1;
-                    });
+            try {
+                if (!window.jspdf) {
+                    alert("Tunggu sebentar, browser sedang memuat library PDF...");
+                    return;
                 }
-            });
-            const ranking = Object.entries(keaktifanMap).sort((a,b) => b[1]-a[1]);
-            
-            doc.autoTable({
-                startY: 45,
-                head: [['Nama Petugas', 'Jumlah Kehadiran']],
-                body: ranking,
-                theme: 'striped',
-                headStyles: { fillColor: [34, 197, 94], halign: 'center' },
-                columnStyles: { 1: { halign: 'center' } },
-                styles: { fontSize: 9 }
-            });
 
-            // Detail Riwayat
-            doc.addPage();
-            doc.setFontSize(12);
-            doc.text("Detail Riwayat Presensi:", 14, 20);
-            const tableData = dataRonda.map(d => [
-                `${d.hari}, ${formatTanggalKeIndo(d.tanggal)}`,
-                d.petugas.map(p => `${p.nama} (${p.status})`).join("\n"),
-                d.konsumsi || "-",
-                d.ket || "-"
-            ]);
+                btn.disabled = true;
+                lbl.innerText = 'MEMPROSES...';
 
-            doc.autoTable({
-                startY: 25,
-                head: [['Waktu', 'Petugas & Status', 'Konsumsi', 'Keterangan']],
-                body: tableData,
-                theme: 'grid',
-                headStyles: { fillColor: [79, 70, 229] },
-                styles: { fontSize: 8 }
-            });
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('p', 'mm', 'a4');
+                const monthVal = document.getElementById('monthFilter').value || "Semua Periode";
 
-            doc.save(`Laporan_Ronda_RT11_${new Date().toLocaleDateString().replace(/\//g,'-')}.pdf`);
+                // Header
+                doc.setFontSize(16);
+                doc.setTextColor(37, 99, 235);
+                doc.text("LAPORAN RONDA RT 11 RW 04", 105, 15, { align: 'center' });
+                doc.setFontSize(9);
+                doc.setTextColor(100);
+                doc.text(`Periode: ${monthVal} | Dicetak: ${new Date().toLocaleString('id-ID')}`, 105, 22, { align: 'center' });
+
+                // Statistik
+                const stats = {};
+                allLogs.forEach(log => {
+                    log.petugas.forEach(p => {
+                        if(!p.nama) return;
+                        if(!stats[p.nama]) stats[p.nama] = { hadir: 0, sakit: 0, ijin: 0, alpha: 0 };
+                        const s = p.status.toLowerCase();
+                        if(stats[p.nama].hasOwnProperty(s)) stats[p.nama][s]++;
+                    });
+                });
+
+                const statRows = Object.keys(stats).map(name => [
+                    name, stats[name].hadir, stats[name].sakit, stats[name].ijin, stats[name].alpha, 
+                    (stats[name].hadir + stats[name].sakit + stats[name].ijin + stats[name].alpha)
+                ]);
+
+                doc.autoTable({
+                    startY: 30,
+                    head: [['NAMA WARGA', 'H', 'S', 'I', 'A', 'TOTAL']],
+                    body: statRows,
+                    theme: 'grid',
+                    headStyles: { fillColor: [37, 99, 235] },
+                    styles: { fontSize: 8 },
+                    margin: { left: 14, right: 14 }
+                });
+
+                // Detail
+                doc.addPage();
+                doc.text("DETAIL KEHADIRAN HARIAN", 14, 15);
+                const detailRows = allLogs.map(log => [
+                    log.timestamp ? new Date(log.timestamp.seconds * 1000).toLocaleDateString('id-ID') : '-',
+                    log.petugas.map(p => `${p.nama}(${p.status.charAt(0)})`).join(', '),
+                    log.konsumsi,
+                    log.keterangan || '-'
+                ]);
+
+                doc.autoTable({
+                    startY: 20,
+                    head: [['TGL', 'PETUGAS', 'KONSUMSI', 'CATATAN']],
+                    body: detailRows,
+                    theme: 'striped',
+                    styles: { fontSize: 7 },
+                    margin: { left: 14, right: 14 }
+                });
+
+                // METODE DOWNLOAD PALING AMAN UNTUK HP
+                const pdfName = `RONDA_RT11_${monthVal}.pdf`;
+                doc.save(pdfName);
+                
+                // Backup jika .save() gagal di browser tertentu
+                setTimeout(() => {
+                    if (confirm("Jika PDF tidak otomatis terunduh, apakah Bapak ingin mencoba membuka di halaman baru?")) {
+                        const blob = doc.output('bloburl');
+                        window.open(blob, '_blank');
+                    }
+                }, 2000);
+
+            } catch (error) {
+                console.error("PDF ERROR:", error);
+                alert("Gagal membuat PDF. Coba gunakan Google Chrome.");
+            } finally {
+                btn.disabled = false;
+                lbl.innerText = 'UNDUH PDF';
+            }
         };
 
-        setInterval(() => { 
-            const clock = document.getElementById('clock');
-            if(clock) clock.innerText = new Date().toLocaleTimeString('id-ID'); 
-        }, 1000);
-        
-        const hariIndo = ["Minggu","Senin","Selasa","Rabu","Kamis","Jumat","Sabtu"];
-        const selectHari = document.getElementById('hari');
-        if (selectHari.options.length === 0) {
-            hariIndo.forEach(h => {
-                const opt = document.createElement('option');
-                opt.text = h;
-                selectHari.add(opt);
-            });
-        }
-        
-        function setWaktuDefault() {
-            const skrg = new Date();
-            document.getElementById('tanggal').value = skrg.toISOString().split('T')[0];
-            document.getElementById('hari').value = hariIndo[skrg.getDay()];
-        }
-        setWaktuDefault();
+        window.switchTab = (tab) => {
+            document.getElementById('section-form').classList.toggle('hidden', tab !== 'form');
+            document.getElementById('section-report').classList.toggle('hidden', tab !== 'report');
+            document.getElementById('nav-form').classList.toggle('bg-blue-800', tab === 'form');
+            document.getElementById('nav-report').classList.toggle('bg-blue-800', tab === 'report');
+        };
+
+        document.getElementById('monthFilter').addEventListener('change', renderData);
+        window.onload = initCamera;
     </script>
 </body>
 </html>
