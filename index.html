@@ -16,6 +16,8 @@
         .camera-box { position: relative; width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 1rem; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 2px solid #e2e8f0; }
         video { width: 100%; height: 100%; object-fit: cover; }
         #canvas { display: none; }
+        /* Style untuk video mirror saat kamera depan */
+        .mirror { transform: scaleX(-1); }
     </style>
 </head>
 <body class="flex flex-col min-h-screen">
@@ -67,9 +69,14 @@
                                         <img id="capturedPhoto" class="w-full h-full object-cover">
                                     </div>
                                 </div>
-                                <div class="flex gap-2">
-                                    <button type="button" id="btnAmbil" onclick="takePhoto()" class="flex-1 bg-gray-900 text-white text-[10px] font-black py-3 rounded-xl hidden uppercase">Ambil Foto Bukti</button>
-                                    <button type="button" id="btnUlang" onclick="retakePhoto()" class="flex-1 bg-red-50 text-red-600 text-[10px] font-black py-3 rounded-xl hidden uppercase">Foto Ulang</button>
+                                <div class="flex flex-col gap-2">
+                                    <div class="flex gap-2">
+                                        <button type="button" id="btnAmbil" onclick="takePhoto()" class="flex-1 bg-gray-900 text-white text-[10px] font-black py-3 rounded-xl hidden uppercase">Ambil Foto Bukti</button>
+                                        <button type="button" id="btnUlang" onclick="retakePhoto()" class="flex-1 bg-red-50 text-red-600 text-[10px] font-black py-3 rounded-xl hidden uppercase">Foto Ulang</button>
+                                    </div>
+                                    <button type="button" id="btnSwitch" onclick="switchCamera()" class="w-full bg-blue-50 text-blue-600 text-[10px] font-black py-2 rounded-lg hidden uppercase flex items-center justify-center gap-2">
+                                        <span>🔄 Ganti Kamera</span>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -158,6 +165,7 @@
 
         let allLogs = [];
         let photoData = "";
+        let currentFacingMode = "environment"; // Default kamera belakang
 
         // UI Prep
         const container = document.getElementById('petugasInputs');
@@ -168,7 +176,7 @@
             container.appendChild(clone);
         }
 
-        // Camera
+        // Camera Elements
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
         const photoPreview = document.getElementById('photoPreview');
@@ -176,31 +184,67 @@
         const camStatus = document.getElementById('camStatus');
         const btnAmbil = document.getElementById('btnAmbil');
         const btnUlang = document.getElementById('btnUlang');
+        const btnSwitch = document.getElementById('btnSwitch');
 
-        async function initCamera() {
+        async function initCamera(mode) {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                // Matikan stream lama sebelum ganti kamera
+                if (video.srcObject) {
+                    video.srcObject.getTracks().forEach(track => track.stop());
+                }
+
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: mode } 
+                });
+                
                 video.srcObject = stream;
+                
+                // Mirror effect untuk kamera depan
+                if (mode === "user") {
+                    video.classList.add('mirror');
+                } else {
+                    video.classList.remove('mirror');
+                }
+
                 video.onloadedmetadata = () => {
                     video.play();
                     video.classList.remove('hidden');
                     camStatus.classList.add('hidden');
                     btnAmbil.classList.remove('hidden');
+                    btnSwitch.classList.remove('hidden');
                 };
             } catch (err) {
                 camStatus.innerHTML = '<p class="text-red-500 font-bold text-[10px] uppercase">Gagal Membuka Kamera</p>';
             }
         }
 
+        window.switchCamera = () => {
+            currentFacingMode = (currentFacingMode === "environment") ? "user" : "environment";
+            initCamera(currentFacingMode);
+        };
+
         window.takePhoto = () => {
             const ctx = canvas.getContext('2d');
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
+            
+            // Logika mirror untuk hasil foto (canvas) jika kamera depan
+            if (currentFacingMode === "user") {
+                ctx.translate(canvas.width, 0);
+                ctx.scale(-1, 1);
+            }
+
             ctx.drawImage(video, 0, 0);
             photoData = canvas.toDataURL('image/jpeg', 0.5);
             capturedPhoto.src = photoData;
+            
+            //Preview tetap mirror jika kamera depan agar natural
+            if (currentFacingMode === "user") capturedPhoto.classList.add('mirror');
+            else capturedPhoto.classList.remove('mirror');
+
             photoPreview.classList.remove('hidden');
             btnAmbil.classList.add('hidden');
+            btnSwitch.classList.add('hidden');
             btnUlang.classList.remove('hidden');
         };
 
@@ -208,6 +252,7 @@
             photoData = "";
             photoPreview.classList.add('hidden');
             btnAmbil.classList.remove('hidden');
+            btnSwitch.classList.remove('hidden');
             btnUlang.classList.add('hidden');
         };
 
@@ -279,7 +324,7 @@
             return 'bg-red-100 text-red-700';
         }
 
-        // PDF Logic (Fixed for Images + Copyright + Time)
+        // PDF Logic
         window.downloadPDF = async function() {
             const btn = document.getElementById('btnPdf');
             const lbl = document.getElementById('pdfLabel');
@@ -307,7 +352,6 @@
                     }
                 };
 
-                // Hal 1: Stats
                 doc.setFontSize(16);
                 doc.setTextColor(37, 99, 235);
                 doc.text("LAPORAN RONDA RT 11 RW 04", 105, 15, { align: 'center' });
@@ -340,7 +384,6 @@
                     margin: { left: 14, right: 14 }
                 });
 
-                // Hal 2+: Details with Photos
                 doc.addPage();
                 doc.setTextColor(37, 99, 235);
                 doc.setFontSize(12);
@@ -395,7 +438,7 @@
         };
 
         document.getElementById('monthFilter').addEventListener('change', renderData);
-        window.onload = initCamera;
+        window.onload = () => initCamera(currentFacingMode);
     </script>
 </body>
 </html>
