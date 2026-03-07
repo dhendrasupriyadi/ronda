@@ -279,7 +279,7 @@
             return 'bg-red-100 text-red-700';
         }
 
-        // PDF Logic (Fixed for Images + Copyright)
+        // PDF Logic (Fixed for Images + Copyright + Time)
         window.downloadPDF = async function() {
             const btn = document.getElementById('btnPdf');
             const lbl = document.getElementById('pdfLabel');
@@ -346,20 +346,24 @@
                 doc.setFontSize(12);
                 doc.text("DETAIL KEHADIRAN & BUKTI FOTO", 14, 15);
 
-                const detailRows = allLogs.map(log => [
-                    log.timestamp ? new Date(log.timestamp.seconds * 1000).toLocaleDateString('id-ID') : '-',
-                    log.petugas.map(p => `${p.nama}(${p.status.charAt(0)})`).join(', '),
-                    log.konsumsi,
-                    '' // Cell for Image
-                ]);
+                const detailRows = allLogs.map(log => {
+                    const d = log.timestamp ? new Date(log.timestamp.seconds * 1000) : new Date();
+                    const tglJam = `${d.toLocaleDateString('id-ID')}\n${d.toLocaleTimeString('id-ID')}`;
+                    return [
+                        tglJam,
+                        log.petugas.map(p => `${p.nama}(${p.status.charAt(0)})`).join(', '),
+                        log.konsumsi,
+                        '' // Cell for Image
+                    ];
+                });
 
                 doc.autoTable({
                     startY: 20,
-                    head: [['TGL', 'PETUGAS', 'KONSUMSI', 'FOTO BUKTI']],
+                    head: [['TGL / JAM', 'PETUGAS', 'KONSUMSI', 'FOTO BUKTI']],
                     body: detailRows,
                     theme: 'striped',
                     styles: { fontSize: 8, minCellHeight: 25, verticalLineColor: 255 },
-                    columnStyles: { 3: { cellWidth: 30 } },
+                    columnStyles: { 0: { cellWidth: 25 }, 3: { cellWidth: 30 } },
                     didDrawCell: (data) => {
                         if (data.section === 'body' && data.column.index === 3) {
                             const log = allLogs[data.row.index];
