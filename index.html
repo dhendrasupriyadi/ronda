@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RT 11 RW 04 GPA - Sistem Informasi Ronda</title>
-    <!-- Library PDF Utama -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
@@ -19,7 +18,7 @@
         #canvas { display: none; }
     </style>
 </head>
-<body class="pb-20">
+<body class="flex flex-col min-h-screen">
 
     <nav class="bg-blue-700 text-white sticky top-0 z-50 shadow-lg">
         <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-2">
@@ -34,8 +33,9 @@
         </div>
     </nav>
 
-    <main class="max-w-6xl mx-auto px-4 mt-8">
+    <main class="max-w-6xl mx-auto px-4 mt-8 flex-grow pb-12">
         
+        <!-- SECTION: FORM -->
         <section id="section-form" class="grid grid-cols-1 lg:grid-cols-12 gap-8">
             <div class="lg:col-span-12">
                 <div class="bg-white rounded-[2rem] shadow-xl p-6 md:p-10 border border-gray-100">
@@ -81,6 +81,7 @@
             </div>
         </section>
 
+        <!-- SECTION: REPORT -->
         <section id="section-report" class="hidden space-y-6">
             <div class="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
                 <div class="p-6 bg-gray-50 border-b flex flex-col md:flex-row justify-between items-center gap-4">
@@ -116,6 +117,11 @@
             </div>
         </section>
     </main>
+
+    <!-- FOOTER APLIKASI -->
+    <footer class="py-6 text-center text-gray-400 border-t border-gray-100 bg-white">
+        <p class="text-[10px] font-bold uppercase tracking-widest">© Dody & Vidy 2026</p>
+    </footer>
 
     <canvas id="canvas"></canvas>
 
@@ -153,7 +159,7 @@
         let allLogs = [];
         let photoData = "";
 
-        // UI
+        // UI Prep
         const container = document.getElementById('petugasInputs');
         const template = document.getElementById('petugasTemplate');
         for(let i=1; i<=5; i++){
@@ -162,7 +168,7 @@
             container.appendChild(clone);
         }
 
-        // KAMERA
+        // Camera
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
         const photoPreview = document.getElementById('photoPreview');
@@ -205,7 +211,7 @@
             btnUlang.classList.add('hidden');
         };
 
-        // DATABASE
+        // Auth & Firestore
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'logs'));
@@ -273,14 +279,14 @@
             return 'bg-red-100 text-red-700';
         }
 
-        // FUNGSI PDF - PERBAIKAN TOTAL (DIRECT DOWNLOAD)
-        window.downloadPDF = function() {
+        // PDF Logic (Fixed for Images + Copyright)
+        window.downloadPDF = async function() {
             const btn = document.getElementById('btnPdf');
             const lbl = document.getElementById('pdfLabel');
             
             try {
                 if (!window.jspdf) {
-                    alert("Tunggu sebentar, browser sedang memuat library PDF...");
+                    alert("Tunggu library PDF...");
                     return;
                 }
 
@@ -291,7 +297,17 @@
                 const doc = new jsPDF('p', 'mm', 'a4');
                 const monthVal = document.getElementById('monthFilter').value || "Semua Periode";
 
-                // Header
+                const addFooter = (docInstance) => {
+                    const pageCount = docInstance.internal.getNumberOfPages();
+                    for (let i = 1; i <= pageCount; i++) {
+                        docInstance.setPage(i);
+                        docInstance.setFontSize(8);
+                        docInstance.setTextColor(150);
+                        docInstance.text("© Dody & Vidy 2026", 105, 290, { align: 'center' });
+                    }
+                };
+
+                // Hal 1: Stats
                 doc.setFontSize(16);
                 doc.setTextColor(37, 99, 235);
                 doc.text("LAPORAN RONDA RT 11 RW 04", 105, 15, { align: 'center' });
@@ -299,7 +315,6 @@
                 doc.setTextColor(100);
                 doc.text(`Periode: ${monthVal} | Dicetak: ${new Date().toLocaleString('id-ID')}`, 105, 22, { align: 'center' });
 
-                // Statistik
                 const stats = {};
                 allLogs.forEach(log => {
                     log.petugas.forEach(p => {
@@ -325,40 +340,43 @@
                     margin: { left: 14, right: 14 }
                 });
 
-                // Detail
+                // Hal 2+: Details with Photos
                 doc.addPage();
-                doc.text("DETAIL KEHADIRAN HARIAN", 14, 15);
+                doc.setTextColor(37, 99, 235);
+                doc.setFontSize(12);
+                doc.text("DETAIL KEHADIRAN & BUKTI FOTO", 14, 15);
+
                 const detailRows = allLogs.map(log => [
                     log.timestamp ? new Date(log.timestamp.seconds * 1000).toLocaleDateString('id-ID') : '-',
                     log.petugas.map(p => `${p.nama}(${p.status.charAt(0)})`).join(', '),
                     log.konsumsi,
-                    log.keterangan || '-'
+                    '' // Cell for Image
                 ]);
 
                 doc.autoTable({
                     startY: 20,
-                    head: [['TGL', 'PETUGAS', 'KONSUMSI', 'CATATAN']],
+                    head: [['TGL', 'PETUGAS', 'KONSUMSI', 'FOTO BUKTI']],
                     body: detailRows,
                     theme: 'striped',
-                    styles: { fontSize: 7 },
-                    margin: { left: 14, right: 14 }
+                    styles: { fontSize: 8, minCellHeight: 25, verticalLineColor: 255 },
+                    columnStyles: { 3: { cellWidth: 30 } },
+                    didDrawCell: (data) => {
+                        if (data.section === 'body' && data.column.index === 3) {
+                            const log = allLogs[data.row.index];
+                            if (log && log.foto) {
+                                try {
+                                    doc.addImage(log.foto, 'JPEG', data.cell.x + 2, data.cell.y + 2, 26, 20);
+                                } catch (e) {}
+                            }
+                        }
+                    }
                 });
 
-                // METODE DOWNLOAD PALING AMAN UNTUK HP
-                const pdfName = `RONDA_RT11_${monthVal}.pdf`;
-                doc.save(pdfName);
-                
-                // Backup jika .save() gagal di browser tertentu
-                setTimeout(() => {
-                    if (confirm("Jika PDF tidak otomatis terunduh, apakah Bapak ingin mencoba membuka di halaman baru?")) {
-                        const blob = doc.output('bloburl');
-                        window.open(blob, '_blank');
-                    }
-                }, 2000);
+                addFooter(doc);
+                doc.save(`RONDA_RT11_${monthVal.replace('-','_')}.pdf`);
 
             } catch (error) {
-                console.error("PDF ERROR:", error);
-                alert("Gagal membuat PDF. Coba gunakan Google Chrome.");
+                alert("Gagal PDF. Gunakan Chrome.");
             } finally {
                 btn.disabled = false;
                 lbl.innerText = 'UNDUH PDF';
